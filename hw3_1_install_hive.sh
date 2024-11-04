@@ -177,20 +177,6 @@ echo "База данных успешно создана на $POSTGRES_NN"
 echo "*****************************************************************************"
 echo
 
-
-# Определяем значение для listen_addresses
-PSQL_LISTEN_IP="listen_addresses = $IP_NN           # what IP address(es) to listen on;"
-PG_HBA_CONF="host    metastore       hive            $IP_EXTERNAL/32        password"
-
-# Настройка конфигураций PostgreSQL на узле TARGET_NN
-echo "Настройка конфигураций postgresql.conf"
-sshpass -p "$SSH_PASS" ssh "$TARGET_NN" bash << EOF
-    # Записываем конфигурации
-    echo "$SSH_PASS" | sudo -S -p "" bash -c "echo '$PSQL_LISTEN_IP' >> ~/etc/postgresql/16/main/postgresql.conf"
-    echo "$SSH_PASS" | sudo -S -p "" bash -c "echo '$PG_HBA_CONF' >> ~/etc/postgresql/16/main/pg_hba.conf"
-EOF
-echo
-
 # Записываем конфигурации в файл на удаленном сервере
 
 sshpass -p "$SSH_PASS" ssh "$HADOOP_JN" bash << EOF
@@ -202,22 +188,10 @@ sshpass -p "$SSH_PASS" ssh "$HADOOP_JN" bash << EOF
     # Записываем конфигурации в hive-site.xml
     echo -e '$HIVE_SITE_CONF' > hive-site.xml
 
-    cd ~/$HIVE_DIR/
-    # Создаем директорию warehouse в HDFS
-    hdfs dfs -mkdir -p /user/hive/warehouse
-
-    # Устанавливаем права на папки tmp и warehouse
-    hdfs dfs -chmod g+w /tmp
-    hdfs dfs -chmod g+w /user/hive/warehouse
 EOF
 # Загружаем новые переменные окружения и проверяем значение переменной HIVE_HOME
 sshpass -p "$SSH_PASS" ssh "$HADOOP_JN" "bash -l -c 'source ~/.profile; echo \$HIVE_HOME'"
 echo "Конфигурационные настройки HIVE успешно выполнены"
-echo "*****************************************************************************"
-echo
-
-
-echo "Запуск HIVE выполнен."
 echo "*****************************************************************************"
 echo
 
